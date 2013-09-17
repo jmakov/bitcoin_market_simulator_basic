@@ -1,0 +1,47 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Simulate how agents respond to price changes.
+
+Ideas based on thermodynamic are used to model agent behaviour. Note that since we deal with limited information
+significant error is expected but it should converge with time: error[t1] > error[t2] (based on information
+completeness axiom).
+"""
+
+import logging
+import lib.agents as agents
+import lib.exceptions as exc
+import lib.io as io
+import lib.logger as log
+
+LOGGING_LEVEL = logging.INFO
+
+__author__  = 'Jernej Makovsek <jernej.makovsek@gmail.com>'
+__status__  = 'production'
+__version__ = '1.0'
+__date__    = '23 January 2013'
+
+
+logger = log.getCustomLogger(__file__, LOGGING_LEVEL)
+
+try:
+    database_map = io.loadUserSpecifiedDatabase()
+    database = database_map['data']
+    database_path = database_map['file_name']
+
+    agents_greed = float(raw_input('Set greed of simulated agents (0.0 - 0.9): '))
+
+    #get simulation results
+    response_data = agents.getAgentReactions(database, agents_greed)
+
+    results_file_name = database_path + '_simulated_response_' + 'with_parameter_' + str(agents_greed) + '.json'
+
+    #save simulated results
+    io.serializeData(results_file_name, response_data)
+
+except KeyboardInterrupt:
+    exc.handleKeyboardInterrupt(logger)
+
+except Exception:
+    exc.handleException(logger)

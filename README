@@ -1,0 +1,13 @@
+A basic framework for analysing energy flows between agents is provided enabling analysis and simulation of agent
+behaviour and construction of strategies. Resulting data can be interactively analysed using SageMath. The corresponding
+template code is in the 'analysis' folder.
+
+#########
+# MANUAL
+#########
+First the database must be constructed. Free data is provided by bitcoincharts.com. 'build_database' creates the
+database and logs events to the folder 'logs'.
+To simulate agent responses run 'simulate_agent_responses' which creates corresponding database in your database
+folder.
+For visual data exploration basic interactive example is provided in the 'analysis' folder. SageMath (www.sagemath.org)
+is required to run the interactive script.
