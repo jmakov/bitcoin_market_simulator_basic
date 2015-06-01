@@ -9,9 +9,10 @@ Downloads historic market data for all available markets from bitcoincharts.com,
 and saves it. There are however limitations with bitcoincharts.com: trade data is not
 available at full resolution and is delayed by approx. 15 minutes.
 """
-from lib import constants, io, logger as log, database
-
+from lib import logger as log, constants
 logger = log.get_custom_logger(__file__, constants.log.LEVEL)
+
+from lib import io, database
 
 
 if __name__ == "__main__":
