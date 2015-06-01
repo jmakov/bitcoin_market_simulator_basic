@@ -1,47 +1,45 @@
 # -*- coding: utf-8 -*-
+__author__ = "Jernej Makovšek"
 
 import logging
 import logging.handlers
-import lib.io as tools
+from lib import io, constants
 
 
-def getCustomLogger(_file_name, _logging_level):
+def get_custom_logger(file_name, logging_level):
     """
-    Creates a logger instance and configures it.
-
     A logger instance is created configured to write to console and a file which is rotated every N bytes.
 
-    :param _file_name: (string) name of the logging file
-    :param _logging_level: (int) level of logging i.e. logging.INFO, logging.DEBUG etc.
+    :param file_name: (string) name of the logging file
+    :param logging_level: (int) level of logging i.e. logging.INFO, logging.DEBUG etc.
     :return: (object) logger instance
     """
-    try:
-        logger = logging.getLogger()
-        logger.setLevel(_logging_level)
+    logger = logging.getLogger()
+    logger.setLevel(logging_level)
 
-        log_dir = 'logs/'
-        tools.createFolder(log_dir)
+    io.create_folder(constants.log.DIR)
 
-        #configure file handler for the logger
-        log_name = _file_name.split(".")[0]
-        log_file_name = log_dir + log_name + '.log'
-        fh = logging.handlers.RotatingFileHandler(log_file_name, maxBytes=1000000, backupCount=1)
-        fh.setLevel(_logging_level)
+    # configure file handler for the logger
+    log_name = file_name.split(".")[0]
+    fh = logging.handlers.RotatingFileHandler(
+        filename=constants.log.DIR + log_name + constants.log.EXTENSION,
+        maxBytes=constants.log.MAX_SIZE,
+        backupCount=constants.log.BACKUP_COUNT
+    )
+    fh.setLevel(logging_level)
 
-        #create console handler with a higher log level
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.ERROR)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
 
-        #create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s;%(levelname)s;%(name)s.%(message)s')
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter(constants.log.FORMAT)
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
 
-        #add handlers to the logger
-        logger.addHandler(fh)
-        logger.addHandler(ch)
+    # add handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
 
-        return logger
-
-    except:
-        raise
+    logger.info("Logger configured.")
+    return logger

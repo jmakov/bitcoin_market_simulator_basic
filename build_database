@@ -1,55 +1,32 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+__author__ = 'Jernej Makovšek <jernej.makovsek@gmail.com>'
 
 """
 Gets historic trade data from bitcoincharts.com, normalizes and saves it.
 
 Downloads historic market data for all available markets from bitcoincharts.com, normalizes it relative to USD
-and saves it to relative folder 'DB'. There are however limitations with bitcoincharts.com: trade data is not
+and saves it. There are however limitations with bitcoincharts.com: trade data is not
 available at full resolution and is delayed by approx. 15 minutes.
 """
+from lib import constants, io, logger as log, database
 
-import logging
-import lib.database as db
-import lib.exceptions as exc
-import lib.logger as log
-import lib.io as tools
-
-LOGGING_LEVEL = logging.INFO
-
-__author__  = 'Jernej Makovsek <jernej.makovsek@gmail.com>'
-__status__  = 'production'
-__version__ = '1.0'
-__date__    = '23 January 2013'
+logger = log.get_custom_logger(__file__, constants.log.LEVEL)
 
 
-logger = log.getCustomLogger(__file__, LOGGING_LEVEL)
+if __name__ == "__main__":
+    try:
+        database.create_database(constants.db.PATH)
 
-try:
-    logger.info('Session started.')
+        database_files = io.list_files(constants.db.PATH)
 
-    #get folder name from user
-    database_folder = raw_input('Enter database folder name: ')
+        # normalize and order the database
+        normalized_database = database.get_normalized_ordered_data(database_files)
 
-    tools.createFolder(database_folder)
-
-    database_files = tools.listFiles(database_folder)
-
-    #build database only if the database folder is empty
-    if not database_files:
-        logger.info('Building database.')
-        db.createDatabase(database_folder)
-
-    #normalize and order the database
-    normalized_database = db.getNormalizedOrderedData(database_files)
-
-    #save data
-    tools.serializeData(database_folder + '/' + 'normalized_database.json', normalized_database)
-
-    logger.info('Session ended.')
-
-except KeyboardInterrupt:
-    exc.handleKeyboardInterrupt(logger)
-
-except Exception:
-    exc.handleException(logger)
+        io.serialize_data(
+            path=constants.db.PATH + constants.db.NORMALIZED_FILE_NAME,
+            data=normalized_database
+        )
+    except Exception as e:
+        logger.exception(e)
+        print e.message

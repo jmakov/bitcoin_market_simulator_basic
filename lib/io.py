@@ -9,10 +9,10 @@ import logging
 import os
 import string
 import sys
-
+from lib import constants
 logger = logging.getLogger(__name__)
 REFRESH_PROGRESS_EVERY_N_CYCLES = 1000
-VIRTUAL_CURRENCIES = ['LTC', 'SLL', 'WMZ']
+
 
 
 def displayProgress(_loop_index, _size_to_process, accuracy):
@@ -41,7 +41,7 @@ def loadUserSpecifiedDatabase():
 
         file_name_without_extension = database_file_name.split('.')[0]
 
-        return {'data': database, 'file_name': file_name_without_extension}
+        return database, file_name_without_extension
 
     except IOError, e:
         #if user mistyped database path ask her again
@@ -52,92 +52,57 @@ def loadUserSpecifiedDatabase():
         raise
 
 
-def createFolder(_folder_path):
+def create_folder(path):
+    logger.info("%s", path)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def parse_currency(fn):
     """
-    Creates a directory if it doesn't already exist.
+    Parses currency and market name from file path.
 
-    :param _folder_path: relative path of the folder
-    :return: Nothing. Side effects: creates a folder on the disk.
+    :param fn: (string) path of the file
+    :return: (market name, currency)
     """
-    try:
-        logger.info('createFolder: Creating folder: %s' % _folder_path)
+    market_name = fn[string.rfind(fn, "/") + 1: string.rfind(fn, constants.db.EXTENSION)]
+    currency = market_name[-3:]
 
-        if not os.path.exists(_folder_path):
-            os.makedirs(_folder_path)
-
-    except:
-        raise
+    logger.debug("For file name=%s parsed market_name=%s, currency=%s", fn, market_name, currency)
+    return market_name, currency
 
 
-def getDatabaseCurrency(_file_name):
+def list_files(dir_path):
     """
-    Retrieves currency and market name from file path.
-
-    :param _file_name: (string) path of the file
-    :return: (dict) market name and currency
-    """
-    try:
-        #parse file name
-        market_name = _file_name[string.rfind(_file_name, "/") + 1: string.rfind(_file_name, ".json")]
-        currency = market_name[-3:]
-
-        return {'market_name': market_name, 'currency': currency}
-
-    except:
-        raise
-
-
-def listFiles(_db_dir_path):
-    """
-    Lists file names.
-
     Lists absolute paths of files contained in folder
-    :param _db_dir_path: (string) path to folder of interest
-    :return: (list) all file names in folder
+    :rtype: list
     """
-    try:
-        logger.info('listFiles: Obtaining list of files in folder: %s' % _db_dir_path)
+    # list files: holds paths of found files in directory
+    abs_fn = []
 
-        #list files: holds paths of found files in directory
-        file_names_ = []
+    for file_name in os.listdir(dir_path):
+        market_name, currency = parse_currency(file_name)
 
-        #list files
-        files = os.listdir(_db_dir_path)
+        if currency not in constants.currency.IGNORED:
+            abs_fn.append(dir_path + file_name)
 
-        for file_name in files:
-            #exclude virtual currencies
-            currency = getDatabaseCurrency(file_name)['currency']
-
-            if currency not in VIRTUAL_CURRENCIES:
-                file_names_.append(_db_dir_path + '/' + file_name)
-
-        return file_names_
-
-    except:
-        raise
+    logger.debug("In %s found: %s", dir_path, abs_fn)
+    return abs_fn
 
 
-def serializeData(_file_path, _data):
+def serialize_data(path, data):
     """
     Serializes data to JSON.
 
-    :param _file_path: (string) path of saved data
-    :param _data: (list) data to be saved
-    :return: Nothing. Side effects: saves data to disk.
+    :param path: (string) path of saved data
+    :param data: (list) data to be saved
     """
-    try:
-        #get data size
-        size = len(_data)
-        logger.debug('serializeData: Data size: %s' % size)
+    if data:
+        logger.info('serializeData: Saving data to: %s' % path)
 
-        if size:
-            logger.info('serializeData: Saving data to: %s' % _file_path)
+        with open(path, 'w') as f:
+            json.dump(data, f)
 
-            with open(_file_path, 'w') as f:
-                json.dump(_data, f)
-
-        else:
-            logger.warning('serializeData: No data in container, %s will not be saved' % _file_path)
-
-    except:
-        raise
+    else:
+        logger.warning('serializeData: No data in container, %s will not be saved.' % path)
